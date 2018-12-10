@@ -10,34 +10,31 @@
 """
 import os
 import IPy
-from OLT import *
 from telnet import *
 
 __author__ = 'shachuan1992'
 
 if __name__ == '__main__':
-    OLT = telnet()
-    with open("平邑OLT地址.txt", 'r') as f:
-        iplist = f.readlines()
-        for ip in iplist:
-            # 对IP进行预处理，得到网络位和网段
-            ip_pre = ip.rstrip('\n').split('.')
-            network_1 = ip_pre[0]
-            network_2 = ip_pre[1]
-            network_3 = ip_pre[2]
-            subnet = network_1 + '.' + network_2 + '.' + network_3 + '.' + '0' + '/24'
-            #Ping该IP
-            info = os.system('ping -c 1 -W 5 %s' % ip)
-            if info:
-                print('监测到%s不通，正在自动更换IP\n' % ip)
-                #查找相同网段的IP，并存入ip_backuplist列表中
-                ip_backuplist = []
-                for ip_backup in iplist:
-                    #如果该备用IP与ping的IP在同一字网且不是当前的IP
-                    if ((ip_backup in IPy.IP(subnet)) and (ip_backup != ip)) is True:
-                        ip_backup = ip_backup.rstrip('\n')
-                        ip_backuplist.append(ip_backup)
-                        #OLT.change(ip_backup)
+    while True:
+        with open("平邑OLT地址.txt", 'r') as f:
+            iplist = f.readlines()
+            for ip in iplist:
+                # 对IP进行预处理，得到网络位和网段
+                ip_pre = ip.rstrip('\n').split('.')
+                network_1 = ip_pre[0]
+                network_2 = ip_pre[1]
+                network_3 = ip_pre[2]
+                subnet = network_1 + '.' + network_2 + '.' + network_3 + '.' + '0' + '/24'
+                #Ping该IP
+                info = os.system('ping -n 1 -w 10 %s' % ip)
+                if info:
+                    print('监测到%s不通，正在自动更换IP\n' % ip)
+                    #遍历当前的IP表
+                    for ip_backup in iplist:
+                        #如果该备用IP与ping的IP在同一字网且不是当前的IP
+                        if ((ip_backup in IPy.IP(subnet)) and (ip_backup != ip)) is True:
+                            ip_backup = ip_backup.rstrip('\n')
+                            olt_telnet.change(ip_backup)
+                else:
+                    print('%s 正常' % ip)
 
-            else:
-                print('%s 正常' % ip)
