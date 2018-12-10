@@ -16,6 +16,7 @@ from telnet import *
 __author__ = 'shachuan1992'
 
 if __name__ == '__main__':
+    OLT = telnet()
     with open("平邑OLT地址.txt", 'r') as f:
         iplist = f.readlines()
         for ip in iplist:
@@ -24,20 +25,19 @@ if __name__ == '__main__':
             network_1 = ip_pre[0]
             network_2 = ip_pre[1]
             network_3 = ip_pre[2]
-            ip_type = network_1 + '.' + network_2 + '.' + network_3 + '.' + '0' + '/24'
+            subnet = network_1 + '.' + network_2 + '.' + network_3 + '.' + '0' + '/24'
             #Ping该IP
-            info = os.system('ping %s' % ip)
+            info = os.system('ping -c 1 -W 5 %s' % ip)
             if info:
-                print('%s不通，正在自动更换IP\n' % ip)
+                print('监测到%s不通，正在自动更换IP\n' % ip)
                 #查找相同网段的IP，并存入ip_backuplist列表中
                 ip_backuplist = []
                 for ip_backup in iplist:
-                    if ((ip_backup in IPy.IP(ip_type)) and (ip_backup != ip)) is True:
-                        print(ip_backup)
-                        print(type(ip_backup))
+                    #如果该备用IP与ping的IP在同一字网且不是当前的IP
+                    if ((ip_backup in IPy.IP(subnet)) and (ip_backup != ip)) is True:
+                        ip_backup = ip_backup.rstrip('\n')
                         ip_backuplist.append(ip_backup)
+                        #OLT.change(ip_backup)
 
-                print(ip_backuplist)
-                #有一个问题，就是需要提前判断OLT的IP满了吗？
             else:
                 print('%s 正常' % ip)
